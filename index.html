@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Minyang Li</title>
+  <meta name="description" content="Personal website of Minyang Li." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="hero">
+    <h1 class="name">Minyang Li</h1>
+    <nav class="hero-nav">
+      <a class="pill" href="about.html">About</a>
+      <a class="pill" href="contact.html">Contact</a>
+      <a class="pill" href="content.html">Content</a>
+    </nav>
+  </main>
+
+  <footer class="site-footer">
+    <small>© <span id="year"></span> Minyang Li</small>
+  </footer>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
