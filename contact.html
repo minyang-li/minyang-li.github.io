@@ -9,11 +9,14 @@
 <body>
   <header class="topbar">
     <a class="brand" href="index.html">ML</a>
-    <nav class="topnav">
-      <a href="about.html">About</a>
-      <a href="contact.html" aria-current="page">Contact</a>
-      <a href="content.html">Content</a>
-    </nav>
+    <div id="nav-placeholder"></div>
+    <script>
+      fetch("nav.html")
+        .then(response => response.text())
+        .then(data => {
+          document.getElementById("nav-placeholder").innerHTML = data;
+        });
+    </script>
   </header>
 
   <main class="container">
