@@ -53,11 +53,30 @@ a:hover{text-decoration:underline}
   padding: .9rem 1rem; background: #fff; border-bottom: 1px solid var(--blue-100);
   position: sticky; top: 0; z-index: 10;
 }
-.brand{
-  display:inline-grid; place-items:center; width:36px; height:36px;
-  font-weight:800; color:#1e293b;
-  border-radius:10px; background:var(--blue-100); border:1px solid var(--blue-300);
+
+/* Handwritten title + wordmark */
+.name, .wordmark{
+  font-family: "Dancing Script", cursive;
+  font-weight: 700;
+  letter-spacing: .5px;
+  background: linear-gradient(90deg, var(--blue-500), var(--blue-300));
+  -webkit-background-clip: text; background-clip: text;
+  color: transparent;
 }
+
+/* Title sizing on the home hero */
+.name{
+  font-size: clamp(3rem, 8vw, 5rem);
+  margin-bottom: 1rem;
+}
+
+/* Top-left wordmark in the sticky header */
+.wordmark{
+  font-size: 1.4rem;        /* tweak if you want it bigger */
+  padding: 0 .1rem;
+  text-decoration: none;
+}
+
 .topnav{display:flex; gap:1rem; align-items:center}
 .topnav a{color:var(--muted); font-weight:600}
 .topnav a[aria-current="page"]{color:var(--blue-500)}
@@ -74,3 +93,31 @@ a:hover{text-decoration:underline}
 
 /* Footer */
 .site-footer{padding:2rem 1rem; text-align:center; color:var(--muted)}
+
+/* Make hero a bit shorter to leave room for the image */
+.hero{
+  min-height: 62vh;         /* was ~80vh; moves content up */
+  padding-top: 6vh;
+}
+
+/* The image container */
+.hero-image{
+  max-width: 1100px;
+  margin: 0 auto 2rem;
+  padding: 0 1rem;
+}
+
+/* Image: 4:3, cover, and fade the top edge softly */
+.hero-image img{
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  display: block;
+  /* top fade to blend into the page background */
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 20%);
+  mask-image: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 20%);
+}
+
+/* Optional: tighten footer a touch since hero is shorter */
+.site-footer{ padding-top: 1.5rem; }
+
