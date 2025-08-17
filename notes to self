@@ -1,0 +1,6 @@
+# notes to self
+
+# to test out: 
+# run: python3 -m http.server 5500
+# visit: http://localhost:5500/.
+# Press Ctrl+C in Terminal to stop
