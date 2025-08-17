@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Media — Minyang Li</title> <!-- change per page -->
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <a class="wordmark" href="index.html">Minyang Li</a>
+    <div id="nav-placeholder"></div>
+    <script>
+      fetch("nav.html").then(r=>r.text()).then(html=>{
+        document.getElementById("nav-placeholder").innerHTML = html;
+      });
+    </script>
+  </header>
+
+  <main class="container">
+    <h1>Media</h1> <!-- change per page -->
+    <p>Coming soon ✨</p>
+  </main>
+
+  <footer class="site-footer"><small>© <span id="year"></span> Minyang Li</small></footer>
+  <script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+</body>
+</html>
