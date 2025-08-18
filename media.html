@@ -1,28 +1,244 @@
 <!doctype html>
+
 <html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Media — Minyang Li</title> 
-  <link rel="stylesheet" href="styles.css" />
-</head>
-<body>
-  <header class="topbar">
-    <a class="wordmark" href="index.html">Minyang Li</a>
-    <div id="nav-placeholder"></div>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Media</title>
+
+    <style>
+      :root{
+        --bg: #0e0e10;
+        --fg: #e8e8ea;
+        --muted: #9aa0a6;
+        --card: #17171a;
+        --ring: #2b2f36;
+        --accent: #6ee7b7;
+        --danger: #ef4444;
+      }
+      html, body { background: var(--bg); color: var(--fg); font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji"; }
+      body { margin: 0; }
+      .wrap { max-width: 1100px; margin: 0 auto; padding: 24px; }
+      h1 { font-size: clamp(28px, 2.2vw, 40px); margin: 8px 0 18px; letter-spacing: .2px; }
+      .hint { color: var(--muted); font-size: 14px; margin-bottom: 14px; }
+
+      /* Gallery grid */
+      .media-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
+      figure.media { margin: 0; border-radius: 16px; overflow: hidden; background: var(--card); border: 1px solid var(--ring); display: flex; flex-direction: column; min-height: 100%; }
+      .thumb { position: relative; aspect-ratio: 4/3; display: block; overflow: hidden; background: #0b0b0d; }
+      .thumb img, .thumb video { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .25s ease; }
+      @media (hover:hover) { .thumb:hover img, .thumb:hover video { transform: scale(1.02); } }
+      .badge { position: absolute; right: 8px; top: 8px; background: rgba(0,0,0,.55); color: #fff; padding: 3px 6px; border-radius: 999px; font-size: 12px; }
+      figcaption { padding: 10px 12px 12px; font-size: 14px; color: var(--muted); line-height: 1.35; }
+      figure.media a { text-decoration: none; color: inherit; outline: none; }
+      figure.media a:focus-visible { box-shadow: 0 0 0 3px var(--accent) inset; }
+      .unsupported { display:grid; place-items:center; text-align:center; padding:10px; color:#fff; background:#111; }
+      .unsupported small { color: var(--muted); display:block; margin-top:4px; }
+      .warn { color: var(--danger); font-weight: 600; }
+
+      /* Lightbox */
+      dialog#lightbox { border: none; padding: 0; background: transparent; }
+      .lb__overlay { position: fixed; inset: 0; background: rgba(0,0,0,.8); display: grid; place-items: center; }
+      .lb__frame { width: min(92vw, 1100px); max-height: 86vh; background: #000; border-radius: 16px; overflow: hidden; border: 1px solid var(--ring); display: grid; grid-template-rows: 1fr auto; }
+      .lb__media { background: #000; display: grid; place-items: center; }
+      .lb__media img, .lb__media video { max-width: 100%; max-height: 100%; display: block; }
+      .lb__bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: #e6e6e6; padding: 10px 12px; background: #0e0e10; border-top: 1px solid var(--ring); }
+      .lb__caption { color: #c9c9cc; font-size: 14px; line-height: 1.35; }
+      .lb__controls { display: flex; gap: 6px; }
+      .btn { background: #16181d; color: #e6e6e6; border: 1px solid var(--ring); border-radius: 999px; padding: 8px 12px; cursor: pointer; font-size: 14px; }
+      .btn:hover { filter: brightness(1.08); }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>Media</h1>
+      <div id="gallery" class="media-grid" aria-live="polite"></div>
+    </div>
+
+    <!-- Lightbox -->
+    <dialog id="lightbox" aria-label="Media viewer">
+      <div class="lb__overlay" data-action="close">
+        <div class="lb__frame" role="group" aria-roledescription="slide">
+          <div class="lb__media" id="lb-media"></div>
+          <div class="lb__bar">
+            <div class="lb__caption" id="lb-caption"></div>
+            <div class="lb__controls">
+              <button class="btn" id="prev" aria-label="Previous">◀</button>
+              <button class="btn" id="next" aria-label="Next">▶</button>
+              <button class="btn" id="close">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </dialog>
+
     <script>
-      fetch("nav.html").then(r=>r.text()).then(html=>{
-        document.getElementById("nav-placeholder").innerHTML = html;
+      /**
+       * Add your files here. You can mix images and videos.
+       * Optional fields:
+       *  - caption: shows under tile & in lightbox (auto from filename if empty)
+       *  - alt: accessibility text (falls back to caption/filename)
+       *  - type: 'image' | 'video' (auto-detected from extension if omitted)
+       *  - poster: image path for video thumbnail
+       *  - sources: [{ src, type }] (advanced: multiple <source> for videos)
+       */
+      const MEDIA = [
+        // Example entries (replace with yours)
+        // { src: 'assets/images/home-page-image.jpg', caption: '' },
+        // { src: 'assets/images/clip-park.mp4', caption: 'Short clip', poster: 'assets/images/clip-park.jpg' },
+  { src: 'assets/images/asna-1.mp4', type: 'video', caption: 'asna', poster: 'assets/images/asna-1.jpg' },
+  { src: 'assets/images/asna-2.mp4', type: 'video', caption: 'asna', poster: 'assets/images/asna-2.jpg' },
+  { src: 'assets/images/home-page-image.jpg', caption: 'toronto'},
+  { src: 'assets/images/karaoke.mp4', type: 'video', caption: 'karaoke night', poster: 'assets/images/karaoke.jpg' },
+  { src: 'assets/images/kayaking.jpg', caption: 'kayaking', alt: 'kayaking with a view of the city' },
+  { src: 'assets/images/maple-leaf.png' },
+  { src: 'assets/images/mark-ambor.png' },
+  { src: 'assets/images/movie.jpg', caption: 'movie' },
+  { src: 'assets/images/osheaga.jpeg', caption: 'osheaga', alt: 'osheaga music festival in Montréal' },
+  { src: 'assets/images/plane.jpg', caption: '🌸' },
+  { src: 'assets/images/snacks.mp4', type: 'video', caption: 'snacks run', poster: 'assets/images/snacks.jpg' },
+  { src: 'assets/images/study.mp4', type: 'video', caption: 'study time lapse', poster: 'assets/images/study.jpg' },
+];
+
+
+      // --- Utility helpers ---
+      // Include .mov and .m4v so they get treated as <video>. Browser support
+      // still depends on the codec inside the file (H.264 works most widely).
+      const isVideo = (p) => /\.(mp4|webm|ogg|mov|m4v)$/i.test(p);
+      // Include .heic so we can label it, but most browsers cannot display HEIC.
+      const isImage = (p) => /\.(apng|avif|gif|jpg|jpeg|png|webp|svg|heic)$/i.test(p);
+      const titleFromFilename = (p) => {
+        const base = p.split('/').pop().replace(/\.[^.]+$/, '');
+        return base.replace(/[\-_]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+      };
+
+      // Normalize items
+      const items = MEDIA.map(m => ({
+        ...m,
+        type: m.type || (isVideo(m.src) ? 'video' : 'image'),
+        caption: (m.caption && m.caption.trim()) ? m.caption : titleFromFilename(m.src),
+        alt: (m.alt && m.alt.trim()) ? m.alt : ((m.caption && m.caption.trim()) ? m.caption : titleFromFilename(m.src)),
+      }));
+
+      // Show a one-time compatibility hint if we detect likely-problematic files
+      const hasHEIC = items.some(i => /\.heic$/i.test(i.src));
+      const hasMOV = items.some(i => /\.(mov|m4v)$/i.test(i.src));
+      if (hasHEIC || hasMOV) {
+        const el = document.getElementById('compat-hint');
+        el.style.display = 'block';
+        el.innerHTML = [
+          hasHEIC ? '<span class="warn">FYI:</span> HEIC is not supported in most browsers. Convert to JPG/PNG/WEBP.' : '',
+          hasMOV ? '<span class="warn">FYI:</span> MOV/M4V may not play if encoded with HEVC/H.265. Convert to MP4 (H.264 + AAC) or provide a WebM fallback.' : '',
+        ].filter(Boolean).join(' ');
+      }
+
+      // --- Render gallery ---
+      const $g = document.getElementById('gallery');
+      const frag = document.createDocumentFragment();
+
+      items.forEach((m, idx) => {
+        const fig = document.createElement('figure');
+        fig.className = 'media';
+
+        // Build media element
+        let mediaInner = '';
+        if (m.type === 'video') {
+          // Prefer <video> with optional multiple <source> elements
+          if (Array.isArray(m.sources) && m.sources.length) {
+            const sources = m.sources.map(s => `<source src="${s.src}"${s.type ? ` type="${s.type}"` : ''}>`).join('');
+            mediaInner = `<video preload="metadata" playsinline muted ${m.poster ? `poster="${m.poster}"` : ''} aria-label="${m.alt}">${sources}</video>`;
+          } else {
+            // Single src
+            const typeAttr = m.src.endsWith('.mov') ? ' type="video/quicktime"' : '';
+            mediaInner = `<video preload="metadata" playsinline muted src="${m.src}"${typeAttr} ${m.poster ? `poster="${m.poster}"` : ''} aria-label="${m.alt}"></video>`;
+          }
+        } else if (/\.heic$/i.test(m.src)) {
+          // Known unsupported image type → friendly placeholder
+          mediaInner = `
+            <div class="unsupported" role="img" aria-label="HEIC not supported">
+              <div>HEIC not supported</div>
+              <small>Convert to JPG/PNG/WEBP</small>
+            </div>`;
+        } else if (!isImage(m.src)) {
+          // Unknown type → placeholder
+          mediaInner = `
+            <div class="unsupported" role="img" aria-label="Unsupported format">
+              <div>Unsupported format</div>
+              <small>${m.src.split('/').pop()}</small>
+            </div>`;
+        } else {
+          mediaInner = `<img loading="lazy" src="${m.src}" alt="${m.alt}">`;
+        }
+
+        fig.innerHTML = `
+          <a href="${m.src}" class="thumb" data-idx="${idx}">
+            ${mediaInner}
+            <span class="badge">${m.type}</span>
+          </a>
+          <figcaption>${m.caption}</figcaption>
+        `;
+
+        // If a video errors (codec/container), swap in a gentle message
+        fig.querySelector('video')?.addEventListener('error', () => {
+          const ph = document.createElement('div');
+          ph.className = 'unsupported';
+          ph.setAttribute('role', 'img');
+          ph.innerHTML = '<div>Video not supported</div><small>Try MP4 (H.264) or add a WebM source</small>';
+          const anchor = fig.querySelector('a.thumb');
+          anchor.replaceChildren(ph);
+          anchor.removeAttribute('href');
+        });
+
+        frag.appendChild(fig);
+      });
+      $g.appendChild(frag);
+
+      // --- Lightbox logic ---
+      const $dlg = document.getElementById('lightbox');
+      const $frame = document.getElementById('lb-media');
+      const $cap = document.getElementById('lb-caption');
+      const $prev = document.getElementById('prev');
+      const $next = document.getElementById('next');
+      const $close = document.getElementById('close');
+      let current = -1;
+
+      const openAt = (i) => {
+        current = (i + items.length) % items.length;
+        const it = items[current];
+        if (it.type === 'video') {
+          if (Array.isArray(it.sources) && it.sources.length) {
+            $frame.innerHTML = `<video controls autoplay playsinline ${it.poster ? `poster="${it.poster}"` : ''}>${it.sources.map(s => `<source src="${s.src}"${s.type ? ` type="${s.type}"` : ''}>`).join('')}</video>`;
+          } else {
+            const typeAttr = it.src.endsWith('.mov') ? ' type="video/quicktime"' : '';
+            $frame.innerHTML = `<video controls autoplay playsinline src="${it.src}"${typeAttr} ${it.poster ? `poster="${it.poster}"` : ''}></video>`;
+          }
+        } else if (/\.heic$/i.test(it.src)) {
+          $frame.innerHTML = `<div class="unsupported"><div>HEIC not supported</div><small>Convert to JPG/PNG/WEBP</small></div>`;
+        } else {
+          $frame.innerHTML = `<img src="${it.src}" alt="${it.alt}">`;
+        }
+        $cap.textContent = it.caption;
+        if (!$dlg.open) $dlg.showModal();
+      };
+      const close = () => { $dlg.close(); $frame.innerHTML = ''; };
+
+      document.getElementById('gallery').addEventListener('click', (e) => {
+        const a = e.target.closest('a.thumb');
+        if (!a) return;
+        e.preventDefault();
+        openAt(+a.dataset.idx);
+      });
+
+      $prev.addEventListener('click', () => openAt(current - 1));
+      $next.addEventListener('click', () => openAt(current + 1));
+      $close.addEventListener('click', close);
+      document.getElementById('lightbox').addEventListener('click', (e) => { if (e.target.dataset.action === 'close') close(); });
+      document.addEventListener('keydown', (e) => {
+        if (!document.getElementById('lightbox').open) return;
+        if (e.key === 'Escape') close();
+        if (e.key === 'ArrowLeft') openAt(current - 1);
+        if (e.key === 'ArrowRight') openAt(current + 1);
       });
     </script>
-  </header>
-
-  <main class="container">
-    <h1>Media</h1> 
-    <p>Coming soon ✨</p>
-  </main>
-
-  <footer class="site-footer"><small>© <span id="year"></span> Minyang Li</small></footer>
-  <script>document.getElementById('year').textContent = new Date().getFullYear();</script>
-</body>
+  </body>
 </html>

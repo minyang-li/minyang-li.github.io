@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Media — Minyang Li</title> 
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <a class="wordmark" href="index.html">Minyang Li</a>
+    <div id="nav-placeholder"></div>
+    <script>
+      fetch("nav.html").then(r=>r.text()).then(html=>{
+        document.getElementById("nav-placeholder").innerHTML = html;
+      });
+    </script>
+  </header>
+
+  <main class="container">
+  <h1>Media</h1>
+
+  <p class="media-hint">Drop files into <code>assets/images</code>. Then list them below in the <code>MEDIA</code> array (caption optional).</p>
+
+  <!-- Gallery grid gets rendered here by JS -->
+  <div id="gallery" class="media-grid" aria-live="polite"></div>
+</main>
+
+<!-- Lightbox -->
+<dialog id="lightbox" aria-label="Media viewer">
+  <div class="lb__overlay" data-action="close">
+    <div class="lb__frame" role="group" aria-roledescription="slide">
+      <div class="lb__media" id="lb-media"></div>
+      <div class="lb__bar">
+        <div class="lb__caption" id="lb-caption"></div>
+        <div class="lb__controls">
+          <button class="btn" id="prev" aria-label="Previous">◀</button>
+          <button class="btn" id="next" aria-label="Next">▶</button>
+          <button class="btn" id="close">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</dialog>
+
+<script>
+  /**
+   * 1) List your media here. Mix images & videos.
+   *    - src: path relative to site root (e.g. "assets/images/…")
+   *    - caption (optional): shown under the tile & in the lightbox
+   *    - alt (optional): accessibility text (falls back to caption)
+   *    - type (optional): 'image' or 'video' (auto-detected from extension if omitted)
+   */
+  const MEDIA = [
+    // EXAMPLES — replace with your files:
+    // { src: 'assets/images/nyc-sunrise.jpg', caption: 'NYC sunrise (2024)', alt: 'Warm sunrise over buildings' },
+    // { src: 'assets/images/desk-setup.png', caption: 'Desk setup v2' },
+    // { src: 'assets/images/clip-park.mp4', caption: 'Short clip — park', type: 'video' },
+    { src: 'assets/images/asna-1.mov', caption: '', alt: '' },
+    { src: 'assets/images/asna-2.mov', caption: '', alt: '' },
+    { src: 'assets/images/home-page-image.jpg', caption: '', alt: '' },
+    { src: 'assets/images/karaoke.mov', caption: '', alt: '' },
+    { src: 'assets/images/kayaking.heic', caption: 'kayaking', alt: 'kayaking with a view of the city' },
+    { src: 'assets/images/maple-leaf.png', caption: '', alt: '' },
+    { src: 'assets/images/mark-ambor.png', caption: '', alt: '' },
+    { src: 'assets/images/movie.heic', caption: '', alt: '' },
+    { src: 'assets/images/osheaga.jpeg', caption: 'osheaga', alt: 'osheaga music festival in montréal' },
+    { src: 'assets/images/plane.heic', caption: '', alt: '' },
+    { src: 'assets/images/snacks.mov', caption: '', alt: 'getting snacks to sneak into the movies' },
+    { src: 'assets/images/study.mov', caption: '', alt: 'time-lapse of me studying' },
+  ];
+
+  // --- Helpers ---
+  const isVideo = (p) => /\.(mp4|webm|ogg)$/i.test(p);
+  const isImage = (p) => /\.(apng|avif|gif|jpg|jpeg|png|webp|svg)$/i.test(p);
+  const titleFromFilename = (p) => {
+    const base = p.split('/').pop().replace(/\.[^.]+$/, '');
+    return base.replace(/[-_]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  };
+
+  // Normalize items (infer type/caption/alt if omitted)
+  const items = MEDIA.map(m => ({
+    ...m,
+    type: m.type || (isVideo(m.src) ? 'video' : 'image'),
+    caption: m.caption || titleFromFilename(m.src),
+    alt: m.alt || m.caption || titleFromFilename(m.src),
+  }));
+
+  // --- Render gallery ---
+  const $g = document.getElementById('gallery');
+  const frag = document.createDocumentFragment();
+
+  items.forEach((m, idx) => {
+    const fig = document.createElement('figure');
+    fig.className = 'media';
+    fig.innerHTML = `
+      <a href="${m.src}" class="thumb" data-idx="${idx}">
+        ${m.type === 'video'
+          ? `<video preload="metadata" playsinline muted src="${m.src}" aria-label="${m.alt}"></video>`
+          : `<img loading="lazy" src="${m.src}" alt="${m.alt}">`
+        }
+        <span class="badge">${m.type}</span>
+      </a>
+      <figcaption>${m.caption}</figcaption>
+    `;
+    frag.appendChild(fig);
+  });
+  $g.appendChild(frag);
+
+  // --- Lightbox logic ---
+  const $dlg = document.getElementById('lightbox');
+  const $frame = document.getElementById('lb-media');
+  const $cap = document.getElementById('lb-caption');
+  const $prev = document.getElementById('prev');
+  const $next = document.getElementById('next');
+  const $close = document.getElementById('close');
+  let current = -1;
+
+  const openAt = (i) => {
+    current = (i + items.length) % items.length;
+    const it = items[current];
+    $frame.innerHTML = it.type === 'video'
+      ? `<video controls autoplay playsinline src="${it.src}" style="background:#000"></video>`
+      : `<img src="${it.src}" alt="${it.alt}">`;
+    $cap.textContent = it.caption;
+    if (!$dlg.open) $dlg.showModal();
+  };
+  const close = () => { $dlg.close(); $frame.innerHTML = ''; };
+
+  document.getElementById('gallery').addEventListener('click', (e) => {
+    const a = e.target.closest('a.thumb');
+    if (!a) return;
+    e.preventDefault();
+    openAt(+a.dataset.idx);
+  });
+
+  $prev.addEventListener('click', () => openAt(current - 1));
+  $next.addEventListener('click', () => openAt(current + 1));
+  $close.addEventListener('click', close);
+  $dlg.addEventListener('click', (e) => { if (e.target.dataset.action === 'close') close(); });
+  document.addEventListener('keydown', (e) => {
+    if (!$dlg.open) return;
+    if (e.key === 'Escape') close();
+    if (e.key === 'ArrowLeft') openAt(current - 1);
+    if (e.key === 'ArrowRight') openAt(current + 1);
+  });
+</script>
+
+
+  <footer class="site-footer"><small>© <span id="year"></span> Minyang Li</small></footer>
+  <script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+</body>
+</html>
